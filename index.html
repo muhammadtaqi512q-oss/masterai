@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MASTER AI - Secure</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-gray-800 p-8 rounded-2xl shadow-2xl border border-gray-700">
+        <h1 class="text-3xl font-bold text-center text-blue-400">MASTER AI</h1>
+        <p class="text-center text-gray-500 text-sm mb-6">Secure Backend Edition</p>
+
+        <textarea id="prompt" class="w-full p-4 rounded-lg bg-gray-900 border border-gray-700 focus:ring-2 focus:ring-blue-500 outline-none" rows="4" placeholder="Ask anything..."></textarea>
+        
+        <button onclick="askAI()" id="btn" class="w-full mt-4 bg-blue-600 hover:bg-blue-700 py-3 rounded-lg font-bold transition">Ask MASTER AI</button>
+        
+        <div id="output" class="mt-6 p-4 bg-gray-900 rounded-lg min-h-[100px] text-gray-300 whitespace-pre-wrap hidden"></div>
+    </div>
+
+    <script>
+        async function askAI() {
+            const prompt = document.getElementById('prompt').value;
+            const output = document.getElementById('output');
+            const btn = document.getElementById('btn');
+            if(!prompt) return;
+
+            btn.innerText = "Thinking...";
+            output.classList.remove('hidden');
+            output.innerText = "Processing...";
+
+            try {
+                // We call our internal API route
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt })
+                });
+                const data = await response.json();
+                output.innerText = data.reply || "Error: Check settings.";
+            } catch (err) {
+                output.innerText = "Error connecting to server.";
+            } finally {
+                btn.innerText = "Ask MASTER AI";
+            }
+        }
+    </script>
+</body>
+</html>
