@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexura Ecosystem & Premium Banking Portal</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body { background-color: #0a0f1d; color: #e2e8f0; font-family: 'Segoe UI', sans-serif; }
+        .royal-card { background: linear-gradient(145deg, #111827, #1f2937); border: 1px solid #d4af37; border-radius: 12px; }
+        .broker-card { background: linear-gradient(145deg, #1c2541, #2a3a5c); border: 1px solid #5bc0be; border-radius: 12px; }
+        .table-dark { background-color: #111827 !important; }
+        .gold-text { color: #d4af37; font-weight: bold; }
+        .cyan-text { color: #5bc0be; font-weight: bold; }
+        .btn-gold { background-color: #d4af37; color: #0a0f1d; font-weight: bold; }
+        .btn-gold:hover { background-color: #f3e5ab; }
+        .btn-cyan { background-color: #5bc0be; color: #0b132b; font-weight: bold; }
+        .btn-cyan:hover { background-color: #6fffe9; }
+        .hidden-panel { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div id="setup-alert" class="alert alert-warning bg-dark text-warning border-warning">
+            <strong>🔒 Note:</strong> Web Ledger system chalane ke liye niche apna GitHub Personal Access Token daalein taake data save ho sake.
+            <input type="password" id="gh-token" class="form-control form-control-sm mt-2 bg-dark text-white border-secondary" placeholder="Paste GitHub Token here...">
+        </div>
+
+        <div class="d-flex justify-content-center mb-4">
+            <button class="btn btn-gold me-2" onclick="switchTab('bank')">🔱 Web 1: Nexura Banking</button>
+            <button class="btn btn-cyan" onclick="switchTab('domain')">🌐 Web 2: Domain Brokerage</button>
+        </div>
+
+        <div id="alertbox"></div>
+
+        <div id="bank-panel" class="row">
+            <div class="col-12 text-center mb-3"><h1 class="gold-text">🔱 NEXURA PREMIUM BANKING SYSTEM</h1></div>
+            <div class="col-md-7">
+                <div class="royal-card p-4 shadow">
+                    <h3 class="gold-text mb-3">Active Premium Accounts</h3>
+                    <table class="table table-dark table-hover align-middle">
+                        <thead><tr><th>Account Holder</th><th class="text-end">Current Balance</th></tr></thead>
+                        <tbody id="bank-table-body"><tr><td colspan="2" class="text-center text-muted">Loading Secure Ledger...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div class="royal-card p-4 shadow">
+                    <h3 class="gold-text mb-3">Secure Money Transfer</h3>
+                    <form id="transfer-form" onsubmit="handleTransfer(event)">
+                        <div class="mb-3"><label class="form-label">Your Account Name</label><input type="text" id="sender_name" class="form-control bg-dark text-white border-secondary" required></div>
+                        <div class="mb-3"><label class="form-label">Security Password</label><input type="password" id="sender_pass" class="form-control bg-dark text-white border-secondary" required></div>
+                        <hr class="border-secondary">
+                        <div class="mb-3"><label class="form-label">Receiver Account Name</label><input type="text" id="receiver_name" class="form-control bg-dark text-white border-secondary" required></div>
+                        <div class="mb-3"><label class="form-label">Amount (Rs.)</label><input type="number" id="transfer_amount" class="form-control bg-dark text-white border-secondary" required></div>
+                        <button type="submit" class="btn btn-gold w-100 mt-2">AUTHORIZE TRANSFER</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div id="domain-panel" class="row hidden-panel">
+            <div class="col-12 text-center mb-3"><h1 class="cyan-text">🌐 NEXURA INVALID DOMAIN LIQUIDATION</h1></div>
+            <div class="col-md-5">
+                <div class="broker-card p-4 shadow">
+                    <h3 class="cyan-text mb-3">Sell Your Domain</h3>
+                    <form id="domain-form" onsubmit="handleDomainSale(event)">
+                        <div class="mb-3"><label class="form-label">Username</label><input type="text" id="dom_user" class="form-control bg-dark text-white border-secondary" required></div>
+                        <div class="mb-3"><label class="form-label">Domain Name</label><input type="text" id="dom_name" class="form-control bg-dark text-white border-secondary" required></div>
+                        <div class="mb-3"><label class="form-label">Algorithmic Password (Username+Domain)</label><input type="text" id="dom_pass" class="form-control bg-dark text-white border-secondary" required></div>
+                        <hr class="border-secondary">
+                        <div class="mb-3"><label class="form-label">Deposit Revenue To</label><input type="text" id="dom_target" class="form-control bg-dark text-white border-secondary" required></div>
+                        <button type="submit" class="btn btn-cyan w-100">LIQUIDATE & DEPOSIT RS. 10,000</button>
+                    </form>
+                </div>
+            </div>
+            <div class="col-md-7">
+                <div class="broker-card p-4 shadow">
+                    <h3 class="cyan-text mb-3">Broker Reputations & Levels</h3>
+                    <table class="table table-dark table-striped align-middle">
+                        <thead><tr><th>Account Name</th><th>Stars Collected</th><th>Current Rank Level</th></tr></thead>
+                        <tbody id="domain-table-body"><tr><td colspan="3" class="text-center text-muted">Loading Secure Ledger...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const repoOwner = "muhammadtaqi512q-oss";
+        const repoName = "masterai";
+        const filePath = "data.json";
+        
+        let users_db = {};
+        let currentSha = "";
+
+        function switchTab(tab) {
+            document.getElementById('bank-panel').classList.toggle('hidden-panel', tab !== 'bank');
+            document.getElementById('domain-panel').classList.toggle('hidden-panel', tab !== 'domain');
+        }
+
+        // Fetch central database from repository
+        async function fetchLedger() {
+            try {
+                const res = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}?nocache=${new Date().getTime()}`);
+                const data = await res.json();
+                currentSha = data.sha;
+                users_db = JSON.parse(atob(data.content));
+                updateDashboards();
+            } catch (err) {
+                showAlert("Error syncing with GitHub central ledger!", "danger");
+            }
+        }
+
+        // Save updated data back to repository
+        async function saveLedger(commitMessage) {
+            const token = document.getElementById('gh-token').value.trim();
+            if(!token) {
+                showAlert("Error: GitHub Token is required to authorize and sync global ledger!", "danger");
+                return false;
+            }
+
+            try {
+                const res = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`, {
+                    method: "PUT",
+                    headers: {
+                        "Authorization": `token ${token}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        message: commitMessage,
+                        content: btoa(JSON.stringify(users_db, null, 2)),
+                        sha: currentSha
+                    })
+                });
+
+                if(res.ok) {
+                    const data = await res.json();
+                    currentSha = data.content.sha;
+                    showAlert("Global Ledger Updated and Synchronized Successfully!", "success");
+                    return true;
+                } else {
+                    const errData = await res.json();
+                    showAlert(`Sync Failed: ${errData.message}`, "danger");
+                    return false;
+                }
+            } catch (err) {
+                showAlert("Network error during sync operation.", "danger");
+                return false;
+            }
+        }
+
+        function updateDashboards() {
+            const bankBody = document.getElementById('bank-table-body');
+            const domBody = document.getElementById('domain-table-body');
+            bankBody.innerHTML = ''; domBody.innerHTML = '';
+
+            Object.keys(users_db).forEach(name => {
+                let user = users_db[name];
+                bankBody.innerHTML += `<tr><td>${name}</td><td class="text-end text-success fw-bold">Rs. ${user.balance.toLocaleString()}</td></tr>`;
+                domBody.innerHTML += `<tr><td>${name}</td><td class="text-warning">★ ${user.stars}</td><td><span class="badge bg-info text-dark">Level ${user.level}/10</span></td></tr>`;
+            });
+        }
+
+        function showAlert(msg, type) {
+            const alertBox = document.getElementById('alertbox');
+            alertBox.innerHTML = `<div class="alert alert-${type} bg-dark text-light border-secondary alert-dismissible fade show">${msg}</div>`;
+        }
+
+        function calculateCryptoPassword(user, domain) {
+            const conv = s => [...s.toLowerCase()].filter(c => /[a-z]/.test(c)).map(c => c.charCodeAt(0) - 96).join(',');
+            return `${conv(user)},${conv(domain)}`;
+        }
+
+        async function handleTransfer(e) {
+            e.preventDefault();
+            const sender = document.getElementById('sender_name').value.trim();
+            const pass = document.getElementById('sender_pass').value;
+            const receiver = document.getElementById('receiver_name').value.trim();
+            const amount = parseInt(document.getElementById('transfer_amount').value);
+
+            if (!users_db[sender] || users_db[sender].password !== pass) { return showAlert("Error: Invalid Credentials!", "danger"); }
+            if (!users_db[receiver]) { return showAlert("Error: Receiver not found!", "danger"); }
+            if (users_db[sender].balance < amount) { return showAlert("Error: Insufficient funds!", "danger"); }
+
+            users_db[sender].balance -= amount;
+            users_db[receiver].balance += amount;
+
+            updateDashboards();
+            const success = await saveLedger(`Tx: ${sender} transferred Rs. ${amount} to ${receiver}`);
+            if(success) document.getElementById('transfer-form').reset();
+            else await fetchLedger(); 
+        }
+
+        async function handleDomainSale(e) {
+            e.preventDefault();
+            const user = document.getElementById('dom_user').value.trim();
+            const domain = document.getElementById('dom_name').value.trim();
+            const enteredPass = document.getElementById('dom_pass').value.trim();
+            const target = document.getElementById('dom_target').value.trim();
+
+            if (enteredPass !== calculateCryptoPassword(user, domain)) { return showAlert("Error: Invalid Formula Password!", "danger"); }
+            if (!users_db[target]) { return showAlert("Error: Target bank account invalid!", "danger"); }
+
+            users_db[target].balance += 10000;
+            users_db[target].stars += 1;
+            users_db[target].level = Math.min(10, 1 + Math.floor(users_db[target].stars / 5));
+
+            updateDashboards();
+            const success = await saveLedger(`Domain Sale: ${domain} by ${user} -> Payout to ${target}`);
+            if(success) document.getElementById('domain-form').reset();
+            else await fetchLedger();
+        }
+
+        fetchLedger();
+    </script>
+</body>
+</html>
