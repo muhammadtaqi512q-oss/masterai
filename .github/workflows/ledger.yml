@@ -1,0 +1,27 @@
+name: Update Nexura Central Ledger
+
+on:
+  repository_dispatch:
+    types: [update_ledger]
+
+permissions:
+  contents: write
+
+jobs:
+  sync-ledger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository Code
+        uses: actions/checkout@v4
+
+      - name: Overwrite Ledger Database
+        run: |
+          echo '${{ github.event.client_payload.new_data }}' > data.json
+
+      - name: Commit and Push Updated Ledger
+        run: |
+          git config --global user.name "Nexura Ledger Bot"
+          git config --global user.email "ledger-bot@nexura.internal"
+          git add data.json
+          git commit -m "${{ github.event.client_payload.message }}" || exit 0
+          git push
